@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ChaosDrill — Order System</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header>
+    <div class="header-left">
+        <h1>ChaosDrill</h1>
+        <span class="subtitle">Order Management System</span>
+    </div>
+    <div class="service-health">
+        <div class="health-item">
+            <span class="health-dot" id="dot-user"></span>
+            <span>User Service</span>
+        </div>
+        <div class="health-item">
+            <span class="health-dot" id="dot-order"></span>
+            <span>Order Service</span>
+        </div>
+        <div class="health-item">
+            <span class="health-dot" id="dot-payment"></span>
+            <span>Payment Service</span>
+        </div>
+    </div>
+</header>
+
+<div id="chaos-banner" class="chaos-banner hidden">
+    <span>⚡ CHAOS EXPERIMENT ACTIVE</span>
+    <span id="chaos-description"></span>
+</div>
+
+<main>
+
+    <div id="auth-section" class="card">
+        <div class="tab-nav">
+            <button class="tab-btn active" onclick="switchTab('login')">Login</button>
+            <button class="tab-btn" onclick="switchTab('register')">Register</button>
+        </div>
+
+        <div id="tab-login">
+            <h2>Login</h2>
+            <div class="form-group">
+                <label>Username</label>
+                <input type="text" id="login-username" placeholder="Enter username">
+            </div>
+            <div class="form-group">
+                <label>Password</label>
+                <input type="password" id="login-password" placeholder="Enter password">
+            </div>
+            <button class="btn btn-primary" onclick="handleLogin()">Login</button>
+        </div>
+
+        <div id="tab-register" class="hidden">
+            <h2>Register</h2>
+            <div class="form-group">
+                <label>Username</label>
+                <input type="text" id="reg-username" placeholder="Choose a username">
+            </div>
+            <div class="form-group">
+                <label>Email</label>
+                <input type="email" id="reg-email" placeholder="Enter email">
+            </div>
+            <div class="form-group">
+                <label>Password</label>
+                <input type="password" id="reg-password" placeholder="Choose a password">
+            </div>
+            <button class="btn btn-primary" onclick="handleRegister()">Register</button>
+        </div>
+
+        <div id="auth-message" class="message hidden"></div>
+    </div>
+
+    <div id="app-section" class="hidden">
+
+        <div class="welcome-bar">
+            <span>Welcome, <strong id="user-display-name"></strong></span>
+            <button class="btn btn-secondary btn-sm" onclick="handleLogout()">Logout</button>
+        </div>
+
+        <div class="grid-two">
+
+            <div class="card">
+                <h2>Place Order</h2>
+                <div class="form-group">
+                    <label>Item Name</label>
+                    <input type="text" id="item-name" placeholder="e.g. Laptop">
+                </div>
+                <div class="form-group">
+                    <label>Quantity</label>
+                    <input type="number" id="item-quantity" value="1" min="1">
+                </div>
+                <div class="form-group">
+                    <label>Amount (₹)</label>
+                    <input type="number" id="item-amount" placeholder="999.00" min="0.01" step="0.01">
+                </div>
+                <button class="btn btn-primary" id="place-order-btn" onclick="handlePlaceOrder()">Place Order</button>
+                <div id="order-message" class="message hidden"></div>
+            </div>
+
+            <div class="card">
+                <h2>Service Status</h2>
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <div class="stat-label">User Service</div>
+                        <div class="stat-value" id="stat-user">—</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">Order Service</div>
+                        <div class="stat-value" id="stat-order">—</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">Payment Service</div>
+                        <div class="stat-value" id="stat-payment">—</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">Circuit Breaker</div>
+                        <div class="stat-value" id="stat-circuit">—</div>
+                    </div>
+                </div>
+                <a href="http://localhost:3000" target="_blank" class="grafana-link">
+                    Open Grafana Dashboard →
+                </a>
+            </div>
+
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h2>Order History</h2>
+                <button class="btn btn-secondary btn-sm" onclick="loadOrders()">Refresh</button>
+            </div>
+            <div id="orders-container">
+                <p class="empty-state">No orders yet. Place your first order above.</p>
+            </div>
+        </div>
+
+    </div>
+
+</main>
+
+<script src="app.js"></script>
+</body>
+</html>
