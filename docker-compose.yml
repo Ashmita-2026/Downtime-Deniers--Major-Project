@@ -1,0 +1,90 @@
+services:
+
+  # =====================================================
+  # USER SERVICE
+  # =====================================================
+
+  user-service:
+    build:
+      context: ./services/user-service
+      dockerfile: Dockerfile
+    container_name: user-service
+    ports:
+      - "5001:5001"
+    networks:
+      - chaosdrill-network
+
+
+  # =====================================================
+  # ORDER SERVICE
+  # =====================================================
+
+  order-service:
+    build:
+      context: ./services/order-service
+      dockerfile: Dockerfile
+    container_name: order-service
+    ports:
+      - "8082:8082"
+    depends_on:
+      - payment-service
+    networks:
+      - chaosdrill-network
+
+
+  # =====================================================
+  # PAYMENT SERVICE
+  # =====================================================
+
+  payment-service:
+    build:
+      context: ./services/payment-service
+      dockerfile: Dockerfile
+    container_name: payment-service
+    ports:
+      - "8083:8083"
+    networks:
+      - chaosdrill-network
+
+
+  # =====================================================
+  # PROMETHEUS
+  # =====================================================
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./observability/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    depends_on:
+      - user-service
+      - order-service
+      - payment-service
+    networks:
+      - chaosdrill-network
+
+
+  # =====================================================
+  # GRAFANA
+  # =====================================================
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    depends_on:
+      - prometheus
+    networks:
+      - chaosdrill-network
+
+
+# =======================================================
+# NETWORK
+# =======================================================
+
+networks:
+  chaosdrill-network:
+    driver: bridge

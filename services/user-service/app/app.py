@@ -13,6 +13,15 @@ from werkzeug.security import (
     check_password_hash
 )
 
+from prometheus_client import (
+    Counter,
+    Histogram,
+    generate_latest,
+    CONTENT_TYPE_LATEST
+)
+
+import time
+
 from database import (
     get_db_connection,
     initialize_database
@@ -35,10 +44,68 @@ jwt = JWTManager(app)
 
 
 # =========================================================
+# PROMETHEUS METRICS
+# =========================================================
+
+REQUEST_COUNT = Counter(
+    "user_service_requests_total",
+    "Total number of requests handled by User Service",
+    ["method", "endpoint", "status"]
+)
+
+REQUEST_LATENCY = Histogram(
+    "user_service_request_latency_seconds",
+    "Request latency of User Service",
+    ["method", "endpoint"]
+)
+
+
+# =========================================================
 # DATABASE INITIALIZATION
 # =========================================================
 
 initialize_database()
+
+
+# =========================================================
+# PROMETHEUS REQUEST MONITORING
+# =========================================================
+
+@app.before_request
+def before_request():
+
+    request.start_time = time.time()
+
+
+@app.after_request
+def after_request(response):
+
+    latency = time.time() - request.start_time
+
+    REQUEST_COUNT.labels(
+        request.method,
+        request.path,
+        response.status_code
+    ).inc()
+
+    REQUEST_LATENCY.labels(
+        request.method,
+        request.path
+    ).observe(latency)
+
+    return response
+
+
+# =========================================================
+# PROMETHEUS METRICS ENDPOINT
+# =========================================================
+
+@app.route("/metrics", methods=["GET"])
+def metrics():
+
+    return generate_latest(), 200, {
+        "Content-Type": CONTENT_TYPE_LATEST
+    }
 
 
 # =========================================================
@@ -77,15 +144,14 @@ def register():
     data = request.get_json()
 
     if not data:
+
         return jsonify({
             "error": "Request body is required"
         }), 400
 
-
     username = data.get("username")
     email = data.get("email")
     password = data.get("password")
-
 
     # Validate fields
     if not username or not email or not password:
@@ -94,10 +160,8 @@ def register():
             "error": "All fields are required"
         }), 400
 
-
     connection = get_db_connection()
     cursor = connection.cursor()
-
 
     # Check username
     cursor.execute(
@@ -113,7 +177,6 @@ def register():
             "error": "Username already exists"
         }), 409
 
-
     # Check email
     cursor.execute(
         "SELECT id FROM users WHERE email = ?",
@@ -128,12 +191,10 @@ def register():
             "error": "Email already exists"
         }), 409
 
-
     # Hash password before storing it
     hashed_password = generate_password_hash(
         password
     )
-
 
     # Insert user
     cursor.execute(
@@ -149,12 +210,10 @@ def register():
         )
     )
 
-
     user_id = cursor.lastrowid
 
     connection.commit()
     connection.close()
-
 
     return jsonify({
 
@@ -180,10 +239,8 @@ def login():
             "error": "Request body is required"
         }), 400
 
-
     username = data.get("username")
     password = data.get("password")
-
 
     # Validate fields
     if not username or not password:
@@ -192,10 +249,8 @@ def login():
             "error": "Username and password are required"
         }), 400
 
-
     connection = get_db_connection()
     cursor = connection.cursor()
-
 
     # Find user
     cursor.execute(
@@ -207,11 +262,9 @@ def login():
         (username,)
     )
 
-
     user = cursor.fetchone()
 
     connection.close()
-
 
     # User doesn't exist
     if not user:
@@ -219,7 +272,6 @@ def login():
         return jsonify({
             "error": "Invalid username or password"
         }), 401
-
 
     # Check password
     if not check_password_hash(
@@ -231,12 +283,10 @@ def login():
             "error": "Invalid username or password"
         }), 401
 
-
     # Create JWT token
     access_token = create_access_token(
         identity=str(user["id"])
     )
-
 
     return jsonify({
 
@@ -261,10 +311,8 @@ def profile():
 
     user_id = get_jwt_identity()
 
-
     connection = get_db_connection()
     cursor = connection.cursor()
-
 
     cursor.execute(
         """
@@ -275,18 +323,15 @@ def profile():
         (user_id,)
     )
 
-
     user = cursor.fetchone()
 
     connection.close()
-
 
     if not user:
 
         return jsonify({
             "error": "User not found"
         }), 404
-
 
     return jsonify({
 

@@ -1,0 +1,36 @@
+global:
+  scrape_interval: 5s
+
+scrape_configs:
+
+  # =====================================================
+  # USER SERVICE
+  # =====================================================
+
+  - job_name: "user-service"
+
+    static_configs:
+      - targets:
+          - "user-service:5001"
+
+
+  # =====================================================
+  # ORDER SERVICE
+  # =====================================================
+
+  - job_name: "order-service"
+
+    static_configs:
+      - targets:
+          - "order-service:8082"
+
+
+  # =====================================================
+  # PAYMENT SERVICE
+  # =====================================================
+
+  - job_name: "payment-service"
+
+    static_configs:
+      - targets:
+          - "payment-service:8083"

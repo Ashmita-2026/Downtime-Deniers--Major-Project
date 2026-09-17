@@ -1,6 +1,15 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 
+from prometheus_client import (
+    Counter,
+    Histogram,
+    generate_latest,
+    CONTENT_TYPE_LATEST
+)
+
+import time
+
 from database import (
     get_db_connection,
     initialize_database
@@ -17,10 +26,67 @@ CORS(app)
 
 
 # =========================================================
+# PROMETHEUS METRICS
+# =========================================================
+
+REQUEST_COUNT = Counter(
+    "payment_service_requests_total",
+    "Total number of requests handled by Payment Service",
+    ["method", "endpoint", "status"]
+)
+
+REQUEST_LATENCY = Histogram(
+    "payment_service_request_latency_seconds",
+    "Request latency of Payment Service",
+    ["method", "endpoint"]
+)
+
+
+# =========================================================
 # DATABASE
 # =========================================================
 
 initialize_database()
+
+
+# =========================================================
+# PROMETHEUS REQUEST MONITORING
+# =========================================================
+
+@app.before_request
+def before_request():
+    request.start_time = time.time()
+
+
+@app.after_request
+def after_request(response):
+
+    latency = time.time() - request.start_time
+
+    REQUEST_COUNT.labels(
+        request.method,
+        request.path,
+        response.status_code
+    ).inc()
+
+    REQUEST_LATENCY.labels(
+        request.method,
+        request.path
+    ).observe(latency)
+
+    return response
+
+
+# =========================================================
+# PROMETHEUS METRICS ENDPOINT
+# =========================================================
+
+@app.route("/metrics", methods=["GET"])
+def metrics():
+
+    return generate_latest(), 200, {
+        "Content-Type": CONTENT_TYPE_LATEST
+    }
 
 
 # =========================================================
@@ -64,11 +130,9 @@ def create_payment():
             "error": "Request body is required"
         }), 400
 
-
     order_id = data.get("orderId")
     user_id = data.get("userId")
     amount = data.get("amount")
-
 
     # Validate order ID
     if not order_id:
@@ -77,14 +141,12 @@ def create_payment():
             "error": "Order ID is required"
         }), 400
 
-
     # Validate user ID
     if not user_id:
 
         return jsonify({
             "error": "User ID is required"
         }), 400
-
 
     # Validate amount
     if not amount or amount <= 0:
@@ -93,10 +155,8 @@ def create_payment():
             "error": "Amount must be greater than 0"
         }), 400
 
-
     connection = get_db_connection()
     cursor = connection.cursor()
-
 
     cursor.execute(
         """
@@ -117,12 +177,10 @@ def create_payment():
         )
     )
 
-
     payment_id = cursor.lastrowid
 
     connection.commit()
     connection.close()
-
 
     return jsonify({
 
@@ -154,7 +212,6 @@ def get_payment(payment_id):
     connection = get_db_connection()
     cursor = connection.cursor()
 
-
     cursor.execute(
         """
         SELECT
@@ -169,18 +226,15 @@ def get_payment(payment_id):
         (payment_id,)
     )
 
-
     payment = cursor.fetchone()
 
     connection.close()
-
 
     if not payment:
 
         return jsonify({
             "error": "Payment not found"
         }), 404
-
 
     return jsonify({
 
@@ -210,7 +264,6 @@ def get_order_payments(order_id):
     connection = get_db_connection()
     cursor = connection.cursor()
 
-
     cursor.execute(
         """
         SELECT
@@ -226,11 +279,9 @@ def get_order_payments(order_id):
         (order_id,)
     )
 
-
     payments = cursor.fetchall()
 
     connection.close()
-
 
     result = []
 
@@ -249,7 +300,6 @@ def get_order_payments(order_id):
             "status": payment["status"]
 
         })
-
 
     return jsonify(result), 200
 
