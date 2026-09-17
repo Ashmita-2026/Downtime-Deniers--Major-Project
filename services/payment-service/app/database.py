@@ -1,6 +1,7 @@
+import os
 import sqlite3
 
-DATABASE = "payments.db"
+DATABASE = os.getenv("DATABASE_PATH", "payments.db")
 
 
 def get_db_connection():
@@ -10,17 +11,16 @@ def get_db_connection():
 
 
 def initialize_database():
-
     connection = get_db_connection()
     cursor = connection.cursor()
 
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS payments (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id       INTEGER PRIMARY KEY AUTOINCREMENT,
             order_id INTEGER NOT NULL,
-            user_id INTEGER NOT NULL,
-            amount REAL NOT NULL,
-            status TEXT NOT NULL DEFAULT 'PENDING'
+            user_id  INTEGER NOT NULL,
+            amount   REAL    NOT NULL,
+            status   TEXT    NOT NULL DEFAULT 'PENDING'
         )
     """)
 

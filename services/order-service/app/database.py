@@ -1,6 +1,7 @@
+import os
 import sqlite3
 
-DATABASE = "orders.db"
+DATABASE = os.getenv("DATABASE_PATH", "orders.db")
 
 
 def get_db_connection():
@@ -10,18 +11,17 @@ def get_db_connection():
 
 
 def initialize_database():
-
     connection = get_db_connection()
     cursor = connection.cursor()
 
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS orders (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_id INTEGER NOT NULL,
-            item_name TEXT NOT NULL,
-            quantity INTEGER NOT NULL,
-            amount REAL NOT NULL,
-            status TEXT NOT NULL DEFAULT 'PENDING'
+            id        INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id   INTEGER NOT NULL,
+            item_name TEXT    NOT NULL,
+            quantity  INTEGER NOT NULL,
+            amount    REAL    NOT NULL,
+            status    TEXT    NOT NULL DEFAULT 'PENDING'
         )
     """)
 

@@ -1,6 +1,7 @@
+import os
 import sqlite3
 
-DATABASE = "users.db"
+DATABASE = os.getenv("DATABASE_PATH", "users.db")
 
 
 def get_db_connection():
@@ -15,9 +16,9 @@ def initialize_database():
 
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS users (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id       INTEGER PRIMARY KEY AUTOINCREMENT,
             username TEXT UNIQUE NOT NULL,
-            email TEXT UNIQUE NOT NULL,
+            email    TEXT UNIQUE NOT NULL,
             password TEXT NOT NULL
         )
     """)
